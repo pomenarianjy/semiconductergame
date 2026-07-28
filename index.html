@@ -3,40 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Silicon Fab: Pure Arcade Engine</title>
+    <title>Silicon Fab: Fully Workable Arcade Game</title>
     <style>
         body {
-            background-color: #03030a;
+            background-color: #050512;
             color: #ffffff;
             font-family: 'Courier New', Courier, monospace;
             margin: 0;
             padding: 10px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             min-height: 100vh;
             user-select: none;
             -webkit-user-select: none;
             box-sizing: border-box;
         }
-        .cabinet {
+
+        .arcade-cabinet {
             width: 100%;
             max-width: 600px;
-            background-color: #0a0a1c;
+            background-color: #0c0c2a;
             border: 4px solid #00ffcc;
             border-radius: 16px;
             padding: 15px;
             box-shadow: 0 0 30px rgba(0, 255, 204, 0.4);
+            box-sizing: border-box;
         }
-        .header {
+
+        .header-title {
             text-align: center;
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             color: #00ffcc;
             text-shadow: 0 0 10px rgba(0, 255, 204, 0.7);
             font-weight: bold;
             margin-bottom: 10px;
         }
-        .hud-bar {
+
+        .hud-display {
             display: flex;
             justify-content: space-between;
             font-size: 0.95rem;
@@ -47,8 +52,10 @@
             border: 1px solid rgba(0, 255, 204, 0.2);
             margin-bottom: 12px;
         }
-        .hud-bar span { color: #ff007f; }
+
+        .hud-display span { color: #ff007f; }
         #score-val { color: #00ffcc; }
+
         .canvas-container {
             position: relative;
             width: 100%;
@@ -58,14 +65,15 @@
             border-radius: 8px;
             overflow: hidden;
         }
+
         canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            cursor: pointer;
         }
+
         .action-button {
             width: 100%;
             background-color: #ff007f;
@@ -82,6 +90,7 @@
             box-sizing: border-box;
             text-transform: uppercase;
         }
+
         .action-button:active {
             transform: scale(0.98);
         }
@@ -89,12 +98,12 @@
 </head>
 <body>
 
-    <div class="cabinet">
-        <div class="header">SILICON FABRICATION PRO</div>
+    <div class="arcade-cabinet">
+        <div class="header-title">SILICON FABRICATION ARCADE</div>
         
-        <div class="hud-bar">
+        <div class="hud-display">
             <div>SCORE: <span id="score-val">00000</span></div>
-            <div>PHASE: <span id="stage-val">1/4: INGOT</span></div>
+            <div>PHASE: <span id="stage-val">1/4: INTERFACE LOAD</span></div>
             <div>INTEGRITY: <span id="faults-val">⭐⭐⭐</span></div>
         </div>
 
@@ -102,57 +111,56 @@
             <canvas id="gameCanvas" width="600" height="400"></canvas>
         </div>
 
-        <button class="action-button" id="ctrlBtn">INTERACT COMMAND [SPACEBAR]</button>
+        <button class="action-button" id="ctrlBtn">TAP HERE TO START GAME</button>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // --- CORE GAME STATE OBJECT ---
+        // --- CORE PROGRAMMATIC MACHINE ENGINE STATE ---
         let game = {
-            mode: 'MENU', // MENU, GATE, PLAYING, WIN, LOSE
+            mode: 'MENU',  // MENU, GATE, PLAYING, WIN, LOSE
             stage: 1,      // 1: Ingot, 2: Litho, 3: Doping, 4: Dicing
             score: 0,
             lives: 3,
             
-            // Stage 1 Physics (Silicon Ingot Pulling)
+            // Phase 1 Mechanics (Ingot Temperature Pulling)
             s1: { temp: 50, progress: 0 },
-            // Stage 2 Physics (UV Lithography Exposure)
-            s2: { x: 50, dir: 1, speed: 6.5, width: 100, flash: 0 },
-            // Stage 3 Map (Ion Implantation Fields)
+            // Phase 2 Mechanics (UV Lithography Reticle Tracking)
+            s2: { x: 50, dir: 1, speed: 7, width: 100, flash: 0 },
+            // Phase 3 Mechanics (Ion Implantation Node Purging)
             s3: { nodes: [], targetHits: 4, hitCount: 0, timeLimit: 8.0 },
-            // Stage 4 Map (Micro-die Packaging Dicing)
+            // Phase 4 Mechanics (Silicon Die Packaging Dicing Cuts)
             s4: { cuts: [], needed: 3, timeLimit: 7.0 }
         };
 
-        // --- UNIFIED HARDWARE EVENT HOOKS ---
+        // --- HARDWARE INPUT EVENT LISTENER BINDINGS ---
         const btn = document.getElementById('ctrlBtn');
-        btn.addEventListener('click', handleGlobalInput);
-        btn.addEventListener('touchstart', (e) => { e.preventDefault(); handleGlobalInput(); });
+        btn.addEventListener('click', processGlobalSystemInput);
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); processGlobalSystemInput(); });
         
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
-                handleGlobalInput();
+                processGlobalSystemInput();
             }
         });
 
-        // Direct Scaling Mouse Pointer / Screen Tap Handler
+        // Exact Local Canvas Coordinate Tracking Click/Tap System
         canvas.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             
-            // Translate layout pixel geometry directly onto the game logic resolution coordinates
             const rect = canvas.getBoundingClientRect();
             const clickX = ((e.clientX - rect.left) / rect.width) * canvas.width;
             const clickY = ((e.clientY - rect.top) / rect.height) * canvas.height;
 
-            handleCanvasClickEvents(clickX, clickY);
+            handleCanvasCoordinateClicks(clickX, clickY);
         });
 
-        function handleGlobalInput() {
+        function processGlobalSystemInput() {
             if (game.mode === 'MENU') {
-                resetEngineData();
+                resetEngineDataStructures();
                 game.mode = 'GATE';
                 updateHudDisplays();
                 return;
@@ -170,39 +178,39 @@
             // CONTROLS FOR ACTIVE MODULE RUNS
             if (game.mode === 'PLAYING') {
                 if (game.stage === 1) {
-                    game.s1.temp += 9.5; // Inject upward thermal mass kinetic velocity
+                    game.s1.temp += 9.5; // Inject upward thermal force kinetic thrust
                     if (game.s1.temp > 100) game.s1.temp = 100;
                 }
                 else if (game.stage === 2) {
-                    game.s2.flash = 8; // Trigger bright laser visual overlay flash
+                    game.s2.flash = 8; // Trigger neon burst flash overlay
                     
                     const targetCenter = 300;
                     const reticleCenter = game.s2.x + (game.s2.width / 2);
                     
-                    // Direct programmatic evaluation of overlap accuracy boundaries
-                    if (Math.abs(reticleCenter - targetCenter) < 50) {
+                    // Programmatic evaluation of coordinate alignment boundaries
+                    if (Math.abs(reticleCenter - targetCenter) < 55) {
                         game.score += 250;
                         transitionToNextStageGate(3);
                     } else {
-                        triggerSystemFault();
+                        triggerSystemFaultDataReset();
                     }
                 }
             }
         }
 
-        function handleCanvasClickEvents(x, y) {
-            // Register interaction bounds for the in-screen "Launch" button overlay
+        function handleCanvasCoordinateClicks(x, y) {
+            // Check bounding boxes for the Launch button overlays inside the screen
             if (game.mode === 'GATE' && x > 200 && x < 400 && y > 210 && y < 260) {
                 launchActiveStageEngine();
                 return;
             }
             if (game.mode === 'WIN' || game.mode === 'LOSE' || game.mode === 'MENU') {
-                handleGlobalInput();
+                processGlobalSystemInput();
                 return;
             }
             if (game.mode !== 'PLAYING') return;
 
-            // STAGE 3: CHEMICALLY DOPED ION FIELD HIT DETECTOR
+            // STAGE 3: INTERACTIVE DOPING FIELD TAP CONSTRAINTS
             if (game.stage === 3) {
                 for (let i = game.s3.nodes.length - 1; i >= 0; i--) {
                     let n = game.s3.nodes[i];
@@ -217,14 +225,14 @@
                                 transitionToNextStageGate(4);
                             }
                         } else {
-                            triggerSystemFault();
+                            triggerSystemFaultDataReset();
                         }
                         break;
                     }
                 }
             }
 
-            // STAGE 4: SILICON DIE PACKAGING DICING CUTS
+            // STAGE 4: INTERACTIVE PACKAGING MATRIX DICING LINES
             if (game.stage === 4) {
                 if (x > 180 && x < 420 && y > 90 && y < 310) {
                     game.s4.cuts.push({ x: x, y: y });
@@ -262,7 +270,7 @@
             }
         }
 
-        function triggerSystemFault() {
+        function triggerSystemFaultDataReset() {
             game.lives--;
             game.mode = 'GATE';
             if (game.lives <= 0) game.mode = 'LOSE';
@@ -270,9 +278,4 @@
         }
 
         function transitionToNextStageGate(nextIdx) {
-            game.stage = nextIdx;
-            game.mode = 'GATE';
-            updateHudDisplays();
-        }
 
-        function resetEngineData() {
