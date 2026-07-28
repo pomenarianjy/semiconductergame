@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -34,6 +34,7 @@
             padding: 10px;
             background: rgba(0, 255, 204, 0.1);
             border-radius: 6px;
+            border: 1px solid rgba(0, 255, 204, 0.2);
         }
 
         .hud span { color: #ff007f; font-weight: bold; }
@@ -51,6 +52,36 @@
         }
 
         .active-screen { display: block; }
+
+        .gate-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0a0a20;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+
+        .gate-btn {
+            background-color: #00ffcc;
+            color: #02020a;
+            padding: 15px 35px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
+            text-transform: uppercase;
+        }
+        .gate-btn:active { transform: scale(0.95); }
 
         .action-button {
             width: 100%;
@@ -80,22 +111,22 @@
             color: #00ffcc;
         }
 
-        /* STAGE 1 */
+        /* STAGE 1 ELEMENTS */
         .bar-bg { width: 80%; height: 24px; background: #333; margin: 60px auto 0 auto; border-radius: 10px; position: relative; }
         .green-zone { width: 30%; height: 100%; background: #00ffcc; margin: 0 auto; opacity: 0.5; }
         .pin { width: 16px; height: 34px; background: #ff007f; position: absolute; top: -5px; left: 50%; transform: translateX(-50%); }
 
-        /* STAGE 2 */
+        /* STAGE 2 ELEMENTS */
         .flash-layer { position: absolute; top:0; left:0; width:100%; height:100%; background:#00ffff; opacity:0; pointer-events:none; }
         .wafer { width: 120px; height: 120px; background: radial-gradient(circle, #202040, #00ffcc); border-radius: 50%; position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); }
         .box-reticle { width: 130px; height: 130px; border: 3px solid #ff007f; position: absolute; top: 35%; left: 0; transform: translateY(-50%); box-sizing: border-box; }
 
-        /* STAGE 3 */
-        .target-node { width: 60px; height: 60px; border-radius: 50%; position: absolute; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.3rem; touch-action: none; }
+        /* STAGE 3 ELEMENTS */
+        .target-node { width: 60px; height: 60px; border-radius: 50%; position: absolute; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.3rem; touch-action: none; z-index: 10; }
         .p-node { background: #ff007f; box-shadow: 0 0 10px #ff007f; }
         .n-node { background: #00ffcc; box-shadow: 0 0 10px #00ffcc; color: #0a0a20; }
 
-        /* STAGE 4 */
+        /* STAGE 4 ELEMENTS */
         .grid-box { width: 220px; height: 220px; border: 2px dashed #444; margin: 20px auto; position: relative; background: linear-gradient(#111 2px, transparent 2px), linear-gradient(90deg, #111 2px, transparent 2px); background-size: 44px 44px; }
         .saw { width: 30px; height: 30px; background: #ffbb00; border-radius: 50%; position: absolute; top: 0; left: 0; display: none; }
     </style>
@@ -113,8 +144,12 @@
 
         <!-- STAGE 1 -->
         <div id="sc-1" class="game-screen active-screen">
+            <div id="gate-1" class="gate-layer">
+                <h2 style="color:#00ffcc; margin-bottom:15px;">STAGE 1: CRYSTAL PULLING</h2>
+                <button class="gate-btn" id="start-btn-1">START STAGE</button>
+            </div>
             <h3 style="margin-top:15px; color:#ff007f;">TEMPERATURE CONTROL</h3>
-            <p style="font-size:0.8rem; color:#889; padding:0 10px;">Tap the big button below rapidly. Keep the Pink Pin inside the central Green Zone!</p>
+            <p style="font-size:0.8rem; color:#889; padding:0 10px;">Keep the Pink Pin inside the central Green Zone by using the interaction button or Spacebar!</p>
             <div class="bar-bg">
                 <div class="green-zone"></div>
                 <div id="pin-element" class="pin"></div>
@@ -124,26 +159,38 @@
 
         <!-- STAGE 2 -->
         <div id="sc-2" class="game-screen">
+            <div id="gate-2" class="gate-layer">
+                <h2 style="color:#00ffcc; margin-bottom:15px;">STAGE 2: LITHOGRAPHY</h2>
+                <button class="gate-btn" id="start-btn-2">START STAGE</button>
+            </div>
             <div id="flash" class="flash-layer"></div>
             <h3 style="color:#00ffcc; margin-top:15px;">LITHOGRAPHY ALIGNMENT</h3>
-            <p style="font-size:0.8rem; color:#889; padding:0 10px;">Tap the big button when the moving pink square aligns over the central wafer!</p>
-            <div class="wafer"></div>
+            <p style="font-size:0.8rem; color:#889; padding:0 10px;">Trigger interaction when the moving pink square aligns exactly over the central round wafer!</p>
+            <div class="wafer" id="wafer-target-element"></div>
             <div id="reticle-box" class="box-reticle"></div>
             <div id="txt-2" class="msg-text" style="color:#ff007f;">TAP TO ALIGN AND ETCH!</div>
         </div>
 
         <!-- STAGE 3 -->
         <div id="sc-3" class="game-screen">
+            <div id="gate-3" class="gate-layer">
+                <h2 style="color:#00ffcc; margin-bottom:15px;">STAGE 3: ION DOPING</h2>
+                <button class="gate-btn" id="start-btn-3">START STAGE</button>
+            </div>
             <h3 style="color: #ffbb00; margin-top:15px;">ION IMPLANTATION</h3>
-            <p style="font-size:0.8rem; color:#889; padding:0 10px;">Tap ONLY the Cyan N-Type Nodes directly on the screen. Avoid Pink Nodes!</p>
+            <p style="font-size:0.8rem; color:#889; padding:0 10px;">Hurry! Clean out the Cyan N-Type nodes directly on the screen before the time expires!</p>
             <div id="node-field" style="position:relative; width:100%; height:200px;"></div>
             <div id="txt-3" class="msg-text">CLEAR THE CYAN NODES!</div>
         </div>
 
         <!-- STAGE 4 -->
         <div id="sc-4" class="game-screen">
+            <div id="gate-4" class="gate-layer">
+                <h2 style="color:#00ffcc; margin-bottom:15px;">STAGE 4: DICING PACK</h2>
+                <button class="gate-btn" id="start-btn-4">START STAGE</button>
+            </div>
             <h3 style="color: #ff007f; margin-top:15px;">CHIP ASSEMBLY & DICING</h3>
-            <p style="font-size:0.8rem; color:#889; padding:0 10px;">Click/Tap inside the grid box 3 times to cut lines and finish fabrication!</p>
+            <p style="font-size:0.8rem; color:#889; padding:0 10px;">Click or Tap directly inside the grid box 3 times before the countdown hits zero!</p>
             <div id="grid-element" class="grid-box">
                 <div id="saw-element" class="saw"></div>
             </div>
@@ -158,16 +205,25 @@
         let activeStage = 1;
         let systemFaults = 3;
         let isDone = false;
+        let stageLive = false;
 
-        // Stage Configurations
+        // Mechanics variables
         let thermalVal = 50; 
         let thermalHoldTime = 0;
         let boxX = 0;
         let movingRight = true;
         let clearedNodes = 0;
         let cutsCount = 0;
+        let countdownTicker = null;
+        let stageNumTwoTimer = null;
 
-        // Unified Event Triggers
+        // Secure click triggers
+        document.getElementById('start-btn-1').addEventListener('click', () => activateStageModule(1));
+        document.getElementById('start-btn-2').addEventListener('click', () => activateStageModule(2));
+        document.getElementById('start-btn-3').addEventListener('click', () => activateStageModule(3));
+        document.getElementById('start-btn-4').addEventListener('click', () => activateStageModule(4));
+
+        // Connect main interaction configurations
         const btn = document.getElementById('ctrlBtn');
         btn.addEventListener('click', processInput);
         btn.addEventListener('touchstart', (e) => { e.preventDefault(); processInput(); });
@@ -179,69 +235,4 @@
             } 
         });
 
-        // Main Loop Core Execution
-        function frameUpdate() {
-            if (isDone) return;
-
-            // STAGE 1: TEMPERATURE CONTROL
-            if (activeStage === 1) {
-                thermalVal -= 0.3; // Constant cooling drag
-                if (thermalVal < 0) thermalVal = 0;
-                document.getElementById('pin-element').style.left = thermalVal + '%';
-                
-                if (thermalVal >= 35 && thermalVal <= 65) {
-                    thermalHoldTime++;
-                    document.getElementById('txt-1').innerText = "STABILIZING: " + Math.floor((thermalHoldTime / 120) * 100) + "%";
-                    if (thermalHoldTime >= 120) { 
-                        addPoints(200);
-                        goToNextStage(2);
-                    }
-                } else if (thermalVal <= 1 || thermalVal >= 99) {
-                    deductLife();
-                    thermalVal = 50; 
-                }
-            }
-
-            // STAGE 2: LITHOGRAPHY MOVEMENT
-            if (activeStage === 2) {
-                const screenWidth = document.getElementById('sc-2').clientWidth || 500;
-                boxX += movingRight ? 6 : -6;
-                document.getElementById('reticle-box').style.left = boxX + 'px';
-
-                if (boxX > (screenWidth - 130)) { boxX = screenWidth - 130; movingRight = false; }
-                else if (boxX < 0) { boxX = 0; movingRight = true; }
-            }
-
-            requestAnimationFrame(frameUpdate);
-        }
-
-        // Input Handler
-        function processInput() {
-            if (isDone) return;
-
-            if (activeStage === 1) {
-                thermalVal += 8; // Boost value
-                if (thermalVal > 100) thermalVal = 100;
-            }
-            else if (activeStage === 2) {
-                const screenWidth = document.getElementById('sc-2').clientWidth || 500;
-                const centerTarget = screenWidth / 2;
-                const currentCenter = boxX + 65; 
-                
-                const flash = document.getElementById('flash');
-                flash.style.opacity = '0.8';
-                setTimeout(() => flash.style.opacity = '0', 60);
-
-                if (Math.abs(currentCenter - centerTarget) < 60) {
-                    addPoints(250);
-                    goToNextStage(3);
-                } else {
-                    deductLife();
-                }
-            }
-        }
-
-        // STAGE 3: NODE POPULATION
-        function generateNodes() {
-            const field = document.getElementById('node-field');
-            field.innerHTML = '';
+        function activateStageModule(stageNum) {
