@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silicon Fab: Micro-Engine</title>
+    <style>
+        body {
+            background-color: #050512;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            user-select: none;
+        }
+
+        .arcade-cabinet {
+            max-width: 750px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 4px solid #00ffcc;
+            border-radius: 16px;
+            background-color: #0a0a20;
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.4);
+            position: relative;
+        }
+
+        h1 {
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc;
+            margin: 0 0 5px 0;
+            font-size: 1.8rem;
+        }
+
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            padding: 8px 15px;
+            background: rgba(0, 255, 204, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 204, 0.2);
+        }
+
+        .hud span { color: #ff007f; font-weight: bold; }
+        #score-val { color: #00ffcc; }
+
+        .game-screen {
+            width: 100%;
+            height: 350px;
+            background: #02020a;
+            border: 2px solid #ff007f;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            display: none;
+        }
+
+        .active-screen { display: block; }
+
+        /* Buttons styling */
+        .arcade-btn {
+            background-color: #ff007f;
+            color: white;
+            padding: 12px 35px;
+            font-size: 1.1rem;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.6);
+            margin-top: 15px;
+        }
+        .arcade-btn:active { transform: scale(0.97); }
+
+        .copy-utility-btn {
+            background-color: #00ffcc;
+            color: #050512;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+
+        .msg-overlay {
+            position: absolute;
+            bottom: 15px;
+            width: 100%;
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-shadow: 0 0 5px #fff;
+        }
+
+        /* STAGE 1: PULLER */
+        .temp-bar-bg { width: 80%; height: 25px; background: #333; margin: 50px auto 0 auto; border-radius: 10px; position: relative; }
+        .temp-target-zone { width: 30%; height: 100%; background: #00ffcc; margin: 0 auto; opacity: 0.6; }
+        .temp-slider { width: 15px; height: 35px; background: #ff007f; position: absolute; top: -5px; left: 50%; transform: translateX(-50%); }
+
+        /* STAGE 2: LITHOGRAPHY */
+        .laser-flash { position: absolute; top:0; left:0; width:100%; height:100%; background:#00ffff; opacity:0; pointer-events:none; }
+        .wafer-target { width: 140px; height: 140px; background: radial-gradient(circle, #202040, #00ffcc); border-radius: 50%; position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); }
+        .moving-reticle { width: 150px; height: 150px; border: 3px solid #ff007f; position: absolute; top: 40%; left: 0; transform: translateY(-50%); }
+
+        /* STAGE 3: ION DOPING */
+        .dopant-node { width: 50px; height: 50px; border-radius: 50%; position: absolute; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; }
+        .p-type { background: #ff007f; box-shadow: 0 0 10px #ff007f; }
+        .n-type { background: #00ffcc; box-shadow: 0 0 10px #00ffcc; color: #0a0a20; }
+
+        /* STAGE 4: ASSEMBLY & DICING */
+        .dicing-grid { width: 250px; height: 250px; border: 2px dashed #333; margin: 20px auto; position: relative; background: linear-gradient(#111 2px, transparent 2px), linear-gradient(90deg, #111 2px, transparent 2px); background-size: 50px 50px; }
+        .saw-blade { width: 30px; height: 30px; background: #ffbb00; border-radius: 50%; position: absolute; top: 0; left: 0; transition: 0.1s linear; }
+    </style>
+</head>
+<body>
+
+    <div class="arcade-cabinet">
+        <h1 id="game-title">SILICON FABRICATION</h1>
+        
+        <div class="hud">
+            <div>Score: <span id="score-val">0</span></div>
+            <div>Stage: <span id="stage-text">1/4: Ingot Production</span></div>
+            <div>Faults: <span id="faults-val">⭐⭐⭐</span></div>
+        </div>
+
+        <!-- STAGE 1 SCREEN -->
+        <div id="screen-1" class="game-screen active-screen">
+            <h3 style="margin-top:20px; color:#ff007f;">BALANCING TEMPERATURE</h3>
+            <div class="temp-bar-bg">
+                <div class="temp-target-zone"></div>
+                <div id="slider-element" class="temp-slider"></div>
+            </div>
+            <div id="msg-1" class="msg-overlay" style="color: #00ffcc;">Stabilizing...</div>
+        </div>
+
+        <!-- STAGE 2 SCREEN -->
+        <div id="screen-2" class="game-screen">
+            <div id="flash-2" class="laser-flash"></div>
+            <h3 style="color:#00ffcc; margin-top:10px;">PHOTOLITHOGRAPHY ALIGNMENT</h3>
+            <div class="wafer-target"></div>
+            <div id="reticle-element" class="moving-reticle"></div>
+            <div id="msg-2" class="msg-overlay" style="color:#ff007f;">FIRE WHEN LINED UP!</div>
+        </div>
+
+        <!-- STAGE 3 SCREEN -->
+        <div id="screen-3" class="game-screen">
+            <h3 style="color: #ffbb00; margin-top:10px;">ION IMPLANTATION</h3>
+            <div id="node-container" style="position:relative; width:100%; height:200px;"></div>
+            <div id="msg-3" class="msg-overlay" style="color:#00ffcc;">TAP THE CYAN NODES!</div>
+        </div>
+
+        <!-- STAGE 4 SCREEN -->
+        <div id="screen-4" class="game-screen">
+            <h3 style="color: #ff007f; margin-top:10px;">DIE ASSEMBLY & DICING</h3>
+            <div id="grid-element" class="dicing-grid">
+                <div id="saw-element" class="saw-blade"></div>
+            </div>
+            <div id="msg-4" class="msg-overlay" style="color:#ffbb00;">SLICE THE SILICON MATRIX</div>
+        </div>
+
+        <div>
+            <button class="arcade-btn" id="actionBtn">ACTION CORE [SPACEBAR]</button>
+        </div>
+
+        <!-- Built-in Copy Feature for Project Sharing -->
+        <div>
+            <button class="copy-utility-btn" id="copySourceBtn">📋 Copy Webpage Code</button>
+        </div>
+    </div>
+
+    <script>
+        let score = 0;
+        let activeStage = 1;
+        let faults = 3;
+        let isGameOver = false;
+
+        let tempValue = 50; 
+        let tempTimer = 0;
+        
+        let reticleX = 0;
+        let reticleDirection = 1;
+        let totalDopantsSpawned = 0;
+
+        document.getElementById('actionBtn').addEventListener('click', triggerStageAction);
+        window.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); triggerStageAction(); } });
+
+        // Self-copy script logic inside the webpage
+        document.getElementById('copySourceBtn').addEventListener('click', () => {
+            const documentSource = window.document.documentElement.outerHTML;
+            navigator.clipboard.writeText(documentSource).then(() => {
+                alert("Whole index.html code copied to clipboard successfully!");
+            });
+        });
+
+        function runGameLoop() {
+            if (isGameOver) return;
+
+            if (activeStage === 1) {
+                tempValue -= 0.3;
+                if (tempValue < 0) tempValue = 0;
+                document.getElementById('slider-element').style.left = tempValue + '%';
+                
+                if (tempValue >= 35 && tempValue <= 65) {
+                    tempTimer += 1;
+                    if (tempTimer > 180) { 
+                        addScore(200);
+                        transitionToStage(2);
+                    }
+                } else if (tempValue <= 5 || tempValue >= 95) {
+                    registerFault();
+                    tempValue = 50; 
+                }
+            }
+
+            if (activeStage === 2) {
+                reticleX += 5 * retDirection;
+                const screenWidth = document.getElementById('screen-2').clientWidth;
+                document.getElementById('reticle-element').style.left = reticleX + 'px';
+
+                if (reticleX > (screenWidth - 150) || reticleX < 0) {
+                    retDirection *= -1;
+                }
+            }
+
+            requestAnimationFrame(runGameLoop);
+        }
+
+        let retDirection = 1;
+
+        function triggerStageAction() {
+            if (activeStage === 1) {
+                tempValue += 6; 
+                if (tempValue > 100) tempValue = 100;
+            }
+            else if (activeStage === 2) {
+                const screenWidth = document.getElementById('screen-2').clientWidth;
+                const targetPos = screenWidth / 2;
+                const currentPos = reticleX + 75;
+                
+                const flash = document.getElementById('flash-2');
+                flash.style.opacity = '0.7';
+                setTimeout(() => flash.style.opacity = '0', 60);
+
+                if (Math.abs(currentPos - targetPos) < 40) {
+                    addScore(250);
+                    transitionToStage(3);
+                } else {
+                    registerFault();
+                }
+            }
+        }
+
