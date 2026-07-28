@@ -76,19 +76,6 @@
         }
         .arcade-btn:active { transform: scale(0.97); }
 
-        .copy-utility-btn {
-            background-color: #00ffcc;
-            color: #050512;
-            padding: 6px 15px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-            border-radius: 4px;
-            margin-top: 15px;
-            text-transform: uppercase;
-        }
-
         .msg-overlay {
             position: absolute;
             bottom: 15px;
@@ -110,7 +97,7 @@
         .moving-reticle { width: 150px; height: 150px; border: 3px solid #ff007f; position: absolute; top: 40%; left: 0; transform: translateY(-50%); }
 
         /* STAGE 3: ION DOPING */
-        .dopant-node { width: 50px; height: 50px; border-radius: 50%; position: absolute; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; }
+        .dopant-node { width: 60px; height: 60px; border-radius: 50%; position: absolute; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.4rem; z-index: 10; }
         .p-type { background: #ff007f; box-shadow: 0 0 10px #ff007f; }
         .n-type { background: #00ffcc; box-shadow: 0 0 10px #00ffcc; color: #0a0a20; }
 
@@ -172,10 +159,6 @@
         <div>
             <button class="arcade-btn" id="actionBtn">ACTION CORE [SPACEBAR]</button>
         </div>
-
-        <div>
-            <button class="copy-utility-btn" id="copySourceBtn">📋 Copy Complete Code</button>
-        </div>
     </div>
 
     <script>
@@ -185,21 +168,21 @@
         let faults = 3;
         let isGameOver = false;
 
-        // Stage 1 (Ingot) Variables
+        // Stage 1 Variables
         let tempValue = 50; 
         let tempTimer = 0;
         
-        // Stage 2 (Litho) Variables
+        // Stage 2 Variables
         let reticleX = 0;
         let retDirection = 1;
         
-        // Stage 3 (Doping) Variables
+        // Stage 3 Variables
         let totalDopantsCleared = 0;
 
-        // Stage 4 (Dicing) Variables
+        // Stage 4 Variables
         let totalCutsMade = 0;
 
-        // Event Handling Bindings
+        // Controls System
         document.getElementById('actionBtn').addEventListener('click', triggerStageAction);
         window.addEventListener('keydown', (e) => { 
             if (e.code === 'Space') { 
@@ -208,27 +191,16 @@
             } 
         });
 
-        // Universal Copy Code Function
-        document.getElementById('copySourceBtn').addEventListener('click', () => {
-            const documentSource = window.document.documentElement.outerHTML;
-            navigator.clipboard.writeText(documentSource).then(() => {
-                alert("Whole code successfully copied! Paste it into your index.html file.");
-            }).catch(err => {
-                alert("Error copying code: " + err);
-            });
-        });
-
         // Primary Game Loop
         function runGameLoop() {
             if (isGameOver) return;
 
-            // --- STAGE 1: INGOT TEMPERATURE ---
+            // STAGE 1: TEMPERATURE CONTROL
             if (activeStage === 1) {
-                tempValue -= 0.25; // Continuous heat decay
+                tempValue -= 0.25; 
                 if (tempValue < 0) tempValue = 0;
                 document.getElementById('slider-element').style.left = tempValue + '%';
                 
-                // Track clean holding inside the green safe boundary zone (35% to 65%)
                 if (tempValue >= 35 && tempValue <= 65) {
                     tempTimer += 1;
                     document.getElementById('msg-1').innerText = "STABILIZING HEAT: " + Math.floor((tempTimer/150)*100) + "%";
@@ -242,5 +214,34 @@
                 }
             }
 
-            // --- STAGE 2: UV LITHOGRAPHY MOVEMENT ---
+            // STAGE 2: RETICLE MOVEMENT
             if (activeStage === 2) {
+                reticleX += 6 * retDirection;
+                const screenWidth = document.getElementById('screen-2').clientWidth || 700;
+                document.getElementById('reticle-element').style.left = reticleX + 'px';
+
+                if (reticleX > (screenWidth - 150)) {
+                    reticleX = screenWidth - 150;
+                    retDirection = -1;
+                } else if (reticleX < 0) {
+                    reticleX = 0;
+                    retDirection = 1;
+                }
+            }
+
+            requestAnimationFrame(runGameLoop);
+        }
+
+        function triggerStageAction() {
+            if (isGameOver) return;
+
+            if (activeStage === 1) {
+                tempValue += 7; 
+                if (tempValue > 100) tempValue = 100;
+            }
+            else if (activeStage === 2) {
+                const screenWidth = document.getElementById('screen-2').clientWidth || 700;
+                const targetPos = screenWidth / 2;
+                const currentPos = reticleX + 75; 
+                
+                const flash = document.getElementById('flash-2');
