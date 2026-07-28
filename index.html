@@ -1,238 +1,226 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Silicon Fab: Micro-Engine</title>
+    <title>Silicon Fab: Online Arcade Engine</title>
+    <!-- Standardized Online Game Engine Framework -->
+    <script src="https://jsdelivr.net"></script>
     <style>
-        body {
-            background-color: #050512;
-            color: #fff;
-            font-family: monospace;
-            text-align: center;
+        html, body {
             margin: 0;
-            padding: 20px;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 15px;
-            border: 3px solid #00ffcc;
-            border-radius: 12px;
-            background-color: #0a0a20;
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
-        }
-
-        .hud {
-            display: flex;
-            justify-content: space-between;
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            padding: 10px;
-            background: rgba(0, 255, 204, 0.1);
-            border-radius: 6px;
-            border: 1px solid rgba(0, 255, 204, 0.2);
-        }
-
-        .hud span { color: #ff007f; font-weight: bold; }
-        #score-val { color: #00ffcc; }
-
-        .game-screen {
-            width: 100%;
-            height: 300px;
-            background: #02020a;
-            border: 2px solid #ff007f;
-            border-radius: 8px;
-            position: relative;
-            overflow: hidden;
-            display: none;
-        }
-
-        .active-screen { display: block; }
-
-        .gate-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
+            padding: 0;
+            background-color: #03030a;
             width: 100%;
             height: 100%;
-            background-color: #0a0a20;
-            z-index: 20;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            box-sizing: border-box;
-            padding: 20px;
+            align-items: center;
+            overflow: hidden;
+            font-family: monospace;
         }
-
-        .gate-btn {
-            background-color: #00ffcc;
-            color: #02020a;
-            padding: 15px 35px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
-            text-transform: uppercase;
+        #game-wrapper {
+            border: 4px solid #00ffcc;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.4);
+            background: #000;
         }
-        .gate-btn:active { transform: scale(0.95); }
-
-        .action-button {
-            width: 100%;
-            background-color: #ff007f;
-            color: white;
-            padding: 20px;
-            font-size: 1.3rem;
-            font-family: inherit;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(255, 0, 127, 0.5);
-            margin-top: 15px;
-            box-sizing: border-box;
-        }
-        .action-button:active { transform: scale(0.98); }
-
-        .msg-text {
-            position: absolute;
-            bottom: 15px;
-            width: 100%;
-            left: 0;
-            font-size: 1.2rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: #00ffcc;
-        }
-
-        /* STAGE 1 ELEMENTS */
-        .bar-bg { width: 80%; height: 24px; background: #333; margin: 60px auto 0 auto; border-radius: 10px; position: relative; }
-        .green-zone { width: 30%; height: 100%; background: #00ffcc; margin: 0 auto; opacity: 0.5; }
-        .pin { width: 16px; height: 34px; background: #ff007f; position: absolute; top: -5px; left: 50%; transform: translateX(-50%); }
-
-        /* STAGE 2 ELEMENTS */
-        .flash-layer { position: absolute; top:0; left:0; width:100%; height:100%; background:#00ffff; opacity:0; pointer-events:none; }
-        .wafer { width: 120px; height: 120px; background: radial-gradient(circle, #202040, #00ffcc); border-radius: 50%; position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); }
-        .box-reticle { width: 130px; height: 130px; border: 3px solid #ff007f; position: absolute; top: 35%; left: 0; transform: translateY(-50%); box-sizing: border-box; }
-
-        /* STAGE 3 ELEMENTS */
-        .target-node { width: 60px; height: 60px; border-radius: 50%; position: absolute; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.3rem; touch-action: none; z-index: 10; }
-        .p-node { background: #ff007f; box-shadow: 0 0 10px #ff007f; }
-        .n-node { background: #00ffcc; box-shadow: 0 0 10px #00ffcc; color: #0a0a20; }
-
-        /* STAGE 4 ELEMENTS */
-        .grid-box { width: 220px; height: 220px; border: 2px dashed #444; margin: 20px auto; position: relative; background: linear-gradient(#111 2px, transparent 2px), linear-gradient(90deg, #111 2px, transparent 2px); background-size: 44px 44px; }
-        .saw { width: 30px; height: 30px; background: #ffbb00; border-radius: 50%; position: absolute; top: 0; left: 0; display: none; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1 id="main-title">SILICON FABRICATION</h1>
-        
-        <div class="hud">
-            <div>Score: <span id="score-val">0</span></div>
-            <div>Stage: <span id="stage-val">1/4: Ingot</span></div>
-            <div>Faults: <span id="faults-val">⭐⭐⭐</span></div>
-        </div>
-
-        <!-- STAGE 1 -->
-        <div id="sc-1" class="game-screen active-screen">
-            <div id="gate-1" class="gate-layer">
-                <h2 style="color:#00ffcc; margin-bottom:15px;">STAGE 1: CRYSTAL PULLING</h2>
-                <button class="gate-btn" id="start-btn-1">START STAGE</button>
-            </div>
-            <h3 style="margin-top:15px; color:#ff007f;">TEMPERATURE CONTROL</h3>
-            <p style="font-size:0.8rem; color:#889; padding:0 10px;">Keep the Pink Pin inside the central Green Zone by using the interaction button or Spacebar!</p>
-            <div class="bar-bg">
-                <div class="green-zone"></div>
-                <div id="pin-element" class="pin"></div>
-            </div>
-            <div id="txt-1" class="msg-text">Balancing Ingot...</div>
-        </div>
-
-        <!-- STAGE 2 -->
-        <div id="sc-2" class="game-screen">
-            <div id="gate-2" class="gate-layer">
-                <h2 style="color:#00ffcc; margin-bottom:15px;">STAGE 2: LITHOGRAPHY</h2>
-                <button class="gate-btn" id="start-btn-2">START STAGE</button>
-            </div>
-            <div id="flash" class="flash-layer"></div>
-            <h3 style="color:#00ffcc; margin-top:15px;">LITHOGRAPHY ALIGNMENT</h3>
-            <p style="font-size:0.8rem; color:#889; padding:0 10px;">Trigger interaction when the moving pink square aligns exactly over the central round wafer!</p>
-            <div class="wafer" id="wafer-target-element"></div>
-            <div id="reticle-box" class="box-reticle"></div>
-            <div id="txt-2" class="msg-text" style="color:#ff007f;">TAP TO ALIGN AND ETCH!</div>
-        </div>
-
-        <!-- STAGE 3 -->
-        <div id="sc-3" class="game-screen">
-            <div id="gate-3" class="gate-layer">
-                <h2 style="color:#00ffcc; margin-bottom:15px;">STAGE 3: ION DOPING</h2>
-                <button class="gate-btn" id="start-btn-3">START STAGE</button>
-            </div>
-            <h3 style="color: #ffbb00; margin-top:15px;">ION IMPLANTATION</h3>
-            <p style="font-size:0.8rem; color:#889; padding:0 10px;">Hurry! Clean out the Cyan N-Type nodes directly on the screen before the time expires!</p>
-            <div id="node-field" style="position:relative; width:100%; height:200px;"></div>
-            <div id="txt-3" class="msg-text">CLEAR THE CYAN NODES!</div>
-        </div>
-
-        <!-- STAGE 4 -->
-        <div id="sc-4" class="game-screen">
-            <div id="gate-4" class="gate-layer">
-                <h2 style="color:#00ffcc; margin-bottom:15px;">STAGE 4: DICING PACK</h2>
-                <button class="gate-btn" id="start-btn-4">START STAGE</button>
-            </div>
-            <h3 style="color: #ff007f; margin-top:15px;">CHIP ASSEMBLY & DICING</h3>
-            <p style="font-size:0.8rem; color:#889; padding:0 10px;">Click or Tap directly inside the grid box 3 times before the countdown hits zero!</p>
-            <div id="grid-element" class="grid-box">
-                <div id="saw-element" class="saw"></div>
-            </div>
-            <div id="txt-4" class="msg-text" style="color:#ffbb00;">SLICE THE SILICON MATRIX</div>
-        </div>
-
-        <button class="action-button" id="ctrlBtn">TAP HERE TO INTERACT [SPACEBAR]</button>
-    </div>
+    <div id="game-wrapper"></div>
 
     <script>
-        let currentScore = 0;
-        let activeStage = 1;
-        let systemFaults = 3;
-        let isDone = false;
-        let stageLive = false;
+        // --- CORE PHASER ENGINE CONFIG ---
+        const config = {
+            type: Phaser.AUTO,
+            width: 750,
+            height: 460,
+            parent: 'game-wrapper',
+            backgroundColor: '#050518',
+            physics: {
+                default: 'arcade',
+                arcade: { debug: false }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
 
-        // Mechanics variables
-        let thermalVal = 50; 
-        let thermalHoldTime = 0;
-        let boxX = 0;
-        let movingRight = true;
-        let clearedNodes = 0;
-        let cutsCount = 0;
-        let countdownTicker = null;
-        let stageNumTwoTimer = null;
+        const game = new Phaser.Game(config);
 
-        // Secure click triggers
-        document.getElementById('start-btn-1').addEventListener('click', () => activateStageModule(1));
-        document.getElementById('start-btn-2').addEventListener('click', () => activateStageModule(2));
-        document.getElementById('start-btn-3').addEventListener('click', () => activateStageModule(3));
-        document.getElementById('start-btn-4').addEventListener('click', () => activateStageModule(4));
+        // --- GLOBAL MACHINE STATE VARIABLES ---
+        let gameState = 'MENU'; // MENU, GATE, PLAYING, END_WIN, END_LOSE
+        let stageIndex = 1;      // 1 to 4 sequential stages
+        let gameScore = 0;
+        let livesLeft = 3;
 
-        // Connect main interaction configurations
-        const btn = document.getElementById('ctrlBtn');
-        btn.addEventListener('click', processInput);
-        btn.addEventListener('touchstart', (e) => { e.preventDefault(); processInput(); });
-        
-        window.addEventListener('keydown', (e) => { 
-            if (e.code === 'Space') { 
-                e.preventDefault(); 
-                processInput(); 
-            } 
-        });
+        // Stage-Specific Mechanics State
+        let s1Temperature = 50;
+        let s1TargetHoldTime = 0;
+        let s2VelocityX = 300;
+        let s2MovingRight = true;
+        let s3TargetCyanNodes = 0;
+        let s4CutsMade = 0;
 
-        function activateStageModule(stageNum) {
+        // Object Elements
+        let scoreTextText, livesTextText, stageTextText, statusFooterText, actionButtonHitbox, spacebarKeyObj;
+        let groupS1, groupS2, groupS3, groupS4, menuContainer, gateContainer;
+        let pinS1, reticleS2, waferS2, gridS4, bladeS4, emitterGroup;
+
+        function preload() {}
+
+        function create() {
+            // Instantiate Render Containers
+            menuContainer = this.add.group();
+            gateContainer = this.add.group();
+            groupS1 = this.add.group();
+            groupS2 = this.add.group();
+            groupS3 = this.add.group();
+            groupS4 = this.add.group();
+
+            // Render Core HUD Panel
+            this.add.rectangle(375, 25, 750, 50, 0x0c0c2a).setOrigin(0.5);
+            scoreTextText = this.add.text(25, 16, 'SCORE: 00000', { fontSize: '16px', fill: '#00ffcc', fontFamily: 'monospace' });
+            stageTextText = this.add.text(260, 16, 'PHASE 1: SILICON CRYSTAL', { fontSize: '16px', fill: '#ffffff', fontFamily: 'monospace', fontWeight: 'bold' });
+            livesTextText = this.add.text(620, 16, 'LIVES: ⭐⭐⭐', { fontSize: '16px', fill: '#ff007f', fontFamily: 'monospace' });
+
+            statusFooterText = this.add.text(375, 395, 'Initialize system modules...', { fontSize: '13px', fill: '#8899aa', fontFamily: 'monospace' }).setOrigin(0.5);
+
+            // Render Big Lower Control Bar
+            actionButtonHitbox = this.add.rectangle(375, 435, 730, 40, 0xff007f)
+                .setInteractive()
+                .on('pointerdown', () => processGlobalActionClick(this));
+            this.add.text(375, 435, '⚙️ CLICK HERE OR PRESS [SPACEBAR] TO INTERACT ⚙️', { fontSize: '14px', fill: '#ffffff', fontFamily: 'monospace', fontWeight: 'bold' }).setOrigin(0.5);
+
+            // Connect Spacebar Key Bindings
+            spacebarKeyObj = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+            this.input.keyboard.on('keydown-SPACE', (e) => {
+                e.preventDefault();
+                processGlobalActionClick(this);
+            });
+
+            // Create Canvas Vector Particle Texture Emitter
+            emitterGroup = this.add.particles(0, 0, buildSparkTexture(this), {
+                speed: { min: 80, max: 160 },
+                scale: { start: 1, end: 0 },
+                blendMode: 'ADD',
+                lifespan: 400,
+                quantity: 10,
+                active: false
+            });
+
+            // Build out sub-scenes and show Main Menu
+            constructStageLayouts(this);
+            drawMainMenuLayer(this);
+        }
+
+        function buildSparkTexture(scene) {
+            let canvas = document.createElement('canvas');
+            canvas.width = 6; canvas.height = 6;
+            let ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#00ffcc';
+            ctx.fillRect(0, 0, 6, 6);
+            scene.textures.addCanvas('sparkTex', canvas);
+            return 'sparkTex';
+        }
+
+        function drawMainMenuLayer(scene) {
+            gameState = 'MENU';
+            toggleStageLayerVisibility(false, false, false, false);
+            gateContainer.clear(true, true);
+
+            let title = scene.add.text(375, 160, 'SILICON FAB: ONLINE ARCADE', { fontSize: '28px', fill: '#00ffcc', fontFamily: 'monospace', fontWeight: 'bold' }).setOrigin(0.5);
+            let desc = scene.add.text(375, 210, 'Standardized Multi-Phase Fabrication Game Engine', { fontSize: '15px', fill: '#778899', fontFamily: 'monospace' }).setOrigin(0.5);
+            
+            let btnBox = scene.add.rectangle(375, 290, 200, 50, 0x00ffcc).setInteractive();
+            let btnTxt = scene.add.text(375, 290, 'START GAME', { fontSize: '18px', fill: '#050512', fontFamily: 'monospace', fontWeight: 'bold' }).setOrigin(0.5);
+
+            btnBox.on('pointerdown', () => {
+                title.destroy(); desc.destroy(); btnBox.destroy(); btnTxt.destroy();
+                gameScore = 0; livesLeft = 3; stageIndex = 1;
+                refreshHudMetrics();
+                loadStageGateOverlay(scene);
+            });
+
+            menuContainer.add([title, desc, btnBox, btnTxt]);
+        }
+
+        function loadStageGateOverlay(scene) {
+            gameState = 'GATE';
+            toggleStageLayerVisibility(false, false, false, false);
+            gateContainer.clear(true, true);
+
+            const subTitles = ["", "PHASE 1: CRYSTAL PULLING", "PHASE 2: UV LITHOGRAPHY", "PHASE 3: ION IMPLANTATION", "PHASE 4: MATRIX CHIP DICING"];
+            let t = scene.add.text(375, 150, subTitles[stageIndex], { fontSize: '22px', fill: '#ffffff', fontFamily: 'monospace', fontWeight: 'bold' }).setOrigin(0.5);
+            
+            let b = scene.add.rectangle(375, 260, 200, 50, 0xff007f).setInteractive();
+            let l = scene.add.text(375, 260, 'LAUNCH MODULE', { fontSize: '16px', fill: '#ffffff', fontFamily: 'monospace', fontWeight: 'bold' }).setOrigin(0.5);
+
+            b.on('pointerdown', () => {
+                t.destroy(); b.destroy(); l.destroy();
+                gameState = 'PLAYING';
+
+                if (stageIndex === 1) { s1Temperature = 50; s1TargetHoldTime = 0; toggleStageLayerVisibility(true, false, false, false); }
+                if (stageIndex === 2) { reticleS2.x = 120; s2MovingRight = true; toggleStageLayerVisibility(false, true, false, false); }
+                if (stageIndex === 3) { generateImplantationMatrix(scene); toggleStageLayerVisibility(false, false, true, false); }
+                if (stageIndex === 4) { s4CutsMade = 0; toggleStageLayerVisibility(false, false, false, true); }
+                
+                refreshHudMetrics();
+            });
+
+            gateContainer.add([t, b, l]);
+        }
+
+        function constructStageLayouts(scene) {
+            // Stage 1 Vectors
+            let s1Bg = scene.add.rectangle(375, 220, 460, 24, 0x22223b).setOrigin(0.5);
+            let s1Zone = scene.add.rectangle(375, 220, 140, 24, 0x00ffcc, 0.45).setOrigin(0.5);
+            pinS1 = scene.add.rectangle(375, 220, 16, 40, 0xff007f).setOrigin(0.5);
+            groupS1.add([s1Bg, s1Zone, pinS1]);
+
+            // Stage 2 Vectors
+            waferS2 = scene.add.circle(375, 220, 65, 0x00ffff, 0.35);
+            reticleS2 = scene.add.rectangle(150, 220, 120, 120).setStrokeStyle(4, 0xff007f);
+            groupS2.add([waferS2, reticleS2]);
+
+            // Stage 4 Vectors
+            gridS4 = scene.add.rectangle(375, 220, 220, 220, 0x0b0b26).setStrokeStyle(3, 0x00ffcc).setInteractive();
+            bladeS4 = scene.add.circle(375, 220, 15, 0xffbb00).setVisible(false);
+            
+            gridS4.on('pointerdown', (pointer) => {
+                if (gameState !== 'PLAYING' || stageIndex !== 4) return;
+                bladeS4.setVisible(true);
+                bladeS4.x = pointer.x; bladeS4.y = pointer.y;
+                emitterGroup.emitParticleAt(pointer.x, pointer.y);
+
+                s4CutsMade++;
+                gameScore += 150;
+                refreshHudMetrics();
+
+                if (s4CutsMade >= 3) {
+                    gameState = 'END_WIN';
+                    triggerEndSequenceScene(scene, true);
+                }
+            });
+            groupS4.add([gridS4, bladeS4]);
+        }
+
+        function toggleStageLayerVisibility(s1, s2, s3, s4) {
+            groupS1.setVisible(s1); groupS2.setVisible(s2); groupS3.setVisible(s3); groupS4.setVisible(s4);
+            if (!s3) groupS3.clear(true, true);
+        }
+
+        function refreshHudMetrics() {
+            scoreTextText.setText('SCORE: ' + String(gameScore).padStart(5, '0'));
+            let stars = '';
+            for (let i = 0; i < 3; i++) stars += (i < livesLeft) ? '⭐' : '❌';
+            livesTextText.setText('LIVES: ' + stars);
+
+            const heads = ["", "PHASE 1: CRYSTAL PULL", "PHASE 2: UV SHOT", "PHASE 3: ION DOPING", "PHASE 4: DICING SILICON"];
+            stageTextText.setText(heads[stageIndex]);
+
+            if (gameState === 'PLAYING') {
