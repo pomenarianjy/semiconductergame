@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Silicon Fab: Fully Workable Arcade Game</title>
+    <title>Silicon Fab: Fully Interactive Engine</title>
     <style>
         body {
             background-color: #050512;
@@ -99,11 +99,11 @@
 <body>
 
     <div class="arcade-cabinet">
-        <div class="header-title">SILICON FABRICATION ARCADE</div>
+        <div class="header-title">SILICON FABRICATION CORE</div>
         
         <div class="hud-display">
             <div>SCORE: <span id="score-val">00000</span></div>
-            <div>PHASE: <span id="stage-val">1/4: INTERFACE LOAD</span></div>
+            <div>PHASE: <span id="stage-val">1/4: INGOT</span></div>
             <div>INTEGRITY: <span id="faults-val">⭐⭐⭐</span></div>
         </div>
 
@@ -111,54 +111,52 @@
             <canvas id="gameCanvas" width="600" height="400"></canvas>
         </div>
 
-        <button class="action-button" id="ctrlBtn">TAP HERE TO START GAME</button>
+        <button class="action-button" id="ctrlBtn">START FABRICATION CORE</button>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // --- CORE PROGRAMMATIC MACHINE ENGINE STATE ---
+        // --- GLOBAL ENGINE STATE ---
         let game = {
-            mode: 'MENU',  // MENU, GATE, PLAYING, WIN, LOSE
+            mode: 'MENU', // MENU, GATE, PLAYING, WIN, LOSE
             stage: 1,      // 1: Ingot, 2: Litho, 3: Doping, 4: Dicing
             score: 0,
             lives: 3,
             
-            // Phase 1 Mechanics (Ingot Temperature Pulling)
+            // Stage 1: Ingot Temperature Core
             s1: { temp: 50, progress: 0 },
-            // Phase 2 Mechanics (UV Lithography Reticle Tracking)
-            s2: { x: 50, dir: 1, speed: 7, width: 100, flash: 0 },
-            // Phase 3 Mechanics (Ion Implantation Node Purging)
+            // Stage 2: UV Photolithography Mask Tracking
+            s2: { x: 50, dir: 1, speed: 6, width: 100, flash: 0 },
+            // Stage 3: Ion Implantation Matrix Nodes
             s3: { nodes: [], targetHits: 4, hitCount: 0, timeLimit: 8.0 },
-            // Phase 4 Mechanics (Silicon Die Packaging Dicing Cuts)
+            // Stage 4: Matrix Grid Micro-chip Dicing Cuts
             s4: { cuts: [], needed: 3, timeLimit: 7.0 }
         };
 
-        // --- HARDWARE INPUT EVENT LISTENER BINDINGS ---
+        // --- UNIFIED CONTROLS INTERFACES ---
         const btn = document.getElementById('ctrlBtn');
-        btn.addEventListener('click', processGlobalSystemInput);
-        btn.addEventListener('touchstart', (e) => { e.preventDefault(); processGlobalSystemInput(); });
+        btn.addEventListener('click', handleGlobalActionInput);
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); handleGlobalActionInput(); });
         
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
-                processGlobalSystemInput();
+                handleGlobalActionInput();
             }
         });
 
-        // Exact Local Canvas Coordinate Tracking Click/Tap System
+        // Pointer-down scaling coordinate parser
         canvas.addEventListener('pointerdown', (e) => {
             e.preventDefault();
-            
             const rect = canvas.getBoundingClientRect();
             const clickX = ((e.clientX - rect.left) / rect.width) * canvas.width;
             const clickY = ((e.clientY - rect.top) / rect.height) * canvas.height;
-
-            handleCanvasCoordinateClicks(clickX, clickY);
+            handleScreenCoordinatesTap(clickX, clickY);
         });
 
-        function processGlobalSystemInput() {
+        function handleGlobalActionInput() {
             if (game.mode === 'MENU') {
                 resetEngineDataStructures();
                 game.mode = 'GATE';
@@ -175,37 +173,36 @@
                 return;
             }
 
-            // CONTROLS FOR ACTIVE MODULE RUNS
+            // CONTROLS FOR ACTIVE MODULES
             if (game.mode === 'PLAYING') {
                 if (game.stage === 1) {
-                    game.s1.temp += 9.5; // Inject upward thermal force kinetic thrust
+                    game.s1.temp += 9.5; // Inject thermal balance mass upward thrust
                     if (game.s1.temp > 100) game.s1.temp = 100;
                 }
                 else if (game.stage === 2) {
-                    game.s2.flash = 8; // Trigger neon burst flash overlay
+                    game.s2.flash = 8; // Trigger bright laser visual flash overlay
                     
                     const targetCenter = 300;
                     const reticleCenter = game.s2.x + (game.s2.width / 2);
                     
-                    // Programmatic evaluation of coordinate alignment boundaries
-                    if (Math.abs(reticleCenter - targetCenter) < 55) {
+                    if (Math.abs(reticleCenter - targetCenter) < 50) {
                         game.score += 250;
                         transitionToNextStageGate(3);
                     } else {
-                        triggerSystemFaultDataReset();
+                        triggerSystemFault();
                     }
                 }
             }
         }
 
-        function handleCanvasCoordinateClicks(x, y) {
+        function handleScreenCoordinatesTap(x, y) {
             // Check bounding boxes for the Launch button overlays inside the screen
             if (game.mode === 'GATE' && x > 200 && x < 400 && y > 210 && y < 260) {
                 launchActiveStageEngine();
                 return;
             }
             if (game.mode === 'WIN' || game.mode === 'LOSE' || game.mode === 'MENU') {
-                processGlobalSystemInput();
+                handleGlobalActionInput();
                 return;
             }
             if (game.mode !== 'PLAYING') return;
@@ -225,14 +222,14 @@
                                 transitionToNextStageGate(4);
                             }
                         } else {
-                            triggerSystemFaultDataReset();
+                            triggerSystemFault();
                         }
                         break;
                     }
                 }
             }
 
-            // STAGE 4: INTERACTIVE PACKAGING MATRIX DICING LINES
+            // STAGE 4: INTERACTIVE SCREEN GRID BOUNDS CUTTING
             if (game.stage === 4) {
                 if (x > 180 && x < 420 && y > 90 && y < 310) {
                     game.s4.cuts.push({ x: x, y: y });
@@ -270,7 +267,7 @@
             }
         }
 
-        function triggerSystemFaultDataReset() {
+        function triggerSystemFault() {
             game.lives--;
             game.mode = 'GATE';
             if (game.lives <= 0) game.mode = 'LOSE';
@@ -278,4 +275,11 @@
         }
 
         function transitionToNextStageGate(nextIdx) {
+            game.stage = nextIdx;
+            game.mode = 'GATE';
+            updateHudDisplays();
+        }
 
+        function resetEngineDataStructures() {
+            game.stage = 1;
+            game.score = 0;
