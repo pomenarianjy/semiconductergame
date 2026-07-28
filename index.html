@@ -52,7 +52,7 @@
         .canvas-container {
             position: relative;
             width: 100%;
-            padding-bottom: 66.66%; /* 3:2 Aspect Ratio */
+            padding-bottom: 66.66%; /* Fixed 3:2 Aspect Ratio */
             background-color: #010105;
             border: 2px solid #ff007f;
             border-radius: 8px;
@@ -115,19 +115,18 @@
             stage: 1,      // 1: Ingot, 2: Litho, 3: Doping, 4: Dicing
             score: 0,
             lives: 3,
-            footerText: "System Loaded. Click Launch.",
             
-            // Stage 1 Physics (Ingot Pulling)
+            // Stage 1 Physics (Silicon Ingot Pulling)
             s1: { temp: 50, progress: 0 },
-            // Stage 2 Physics (Lithography Scanning)
-            s2: { x: 50, dir: 1, speed: 6, width: 100, flash: 0 },
-            // Stage 3 Map (Ion Implantation Nodes)
+            // Stage 2 Physics (UV Lithography Exposure)
+            s2: { x: 50, dir: 1, speed: 6.5, width: 100, flash: 0 },
+            // Stage 3 Map (Ion Implantation Fields)
             s3: { nodes: [], targetHits: 4, hitCount: 0, timeLimit: 8.0 },
-            // Stage 4 Map (Dicing Circuits)
+            // Stage 4 Map (Micro-die Packaging Dicing)
             s4: { cuts: [], needed: 3, timeLimit: 7.0 }
         };
 
-        // --- HARDWARE INPUT LISTENERS ---
+        // --- UNIFIED HARDWARE EVENT HOOKS ---
         const btn = document.getElementById('ctrlBtn');
         btn.addEventListener('click', handleGlobalInput);
         btn.addEventListener('touchstart', (e) => { e.preventDefault(); handleGlobalInput(); });
@@ -139,16 +138,16 @@
             }
         });
 
-        // Direct Coordinate Canvas Pointer Handler
+        // Direct Scaling Mouse Pointer / Screen Tap Handler
         canvas.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             
-            // Translate screen mouse coordinates perfectly onto the scaling canvas bounding boxes
+            // Translate layout pixel geometry directly onto the game logic resolution coordinates
             const rect = canvas.getBoundingClientRect();
             const clickX = ((e.clientX - rect.left) / rect.width) * canvas.width;
             const clickY = ((e.clientY - rect.top) / rect.height) * canvas.height;
 
-            handleCanvasClick(clickX, clickY);
+            handleCanvasClickEvents(clickX, clickY);
         });
 
         function handleGlobalInput() {
@@ -168,19 +167,19 @@
                 return;
             }
 
-            // INPUT ACTIONS FOR ACTIVE PLAY STAGES
+            // CONTROLS FOR ACTIVE MODULE RUNS
             if (game.mode === 'PLAYING') {
                 if (game.stage === 1) {
-                    game.s1.temp += 9.0; // Upward thermal mass push
+                    game.s1.temp += 9.5; // Inject upward thermal mass kinetic velocity
                     if (game.s1.temp > 100) game.s1.temp = 100;
                 }
                 else if (game.stage === 2) {
-                    game.s2.flash = 8; // Trigger neon burst flash
+                    game.s2.flash = 8; // Trigger bright laser visual overlay flash
                     
-                    // Direct bounding box coordinate overlapping logic
                     const targetCenter = 300;
                     const reticleCenter = game.s2.x + (game.s2.width / 2);
                     
+                    // Direct programmatic evaluation of overlap accuracy boundaries
                     if (Math.abs(reticleCenter - targetCenter) < 50) {
                         game.score += 250;
                         transitionToNextStageGate(3);
@@ -191,18 +190,19 @@
             }
         }
 
-        function handleCanvasClick(x, y) {
+        function handleCanvasClickEvents(x, y) {
+            // Register interaction bounds for the in-screen "Launch" button overlay
             if (game.mode === 'GATE' && x > 200 && x < 400 && y > 210 && y < 260) {
                 launchActiveStageEngine();
                 return;
             }
-            if ((game.mode === 'WIN' || game.mode === 'LOSE' || game.mode === 'MENU')) {
+            if (game.mode === 'WIN' || game.mode === 'LOSE' || game.mode === 'MENU') {
                 handleGlobalInput();
                 return;
             }
             if (game.mode !== 'PLAYING') return;
 
-            // STAGE 3: NODE SECTOR CLICK TESTS
+            // STAGE 3: CHEMICALLY DOPED ION FIELD HIT DETECTOR
             if (game.stage === 3) {
                 for (let i = game.s3.nodes.length - 1; i >= 0; i--) {
                     let n = game.s3.nodes[i];
@@ -224,7 +224,7 @@
                 }
             }
 
-            // STAGE 4: MATRIX GRID CLICK INTERSECTION DICING
+            // STAGE 4: SILICON DIE PACKAGING DICING CUTS
             if (game.stage === 4) {
                 if (x > 180 && x < 420 && y > 90 && y < 310) {
                     game.s4.cuts.push({ x: x, y: y });
@@ -256,9 +256,8 @@
                     type: Math.random() > 0.45 ? 'N' : 'P'
                 });
             }
-            // Ensure at least required targets exist
-            let filterCount = game.s3.nodes.filter(n => n.type === 'N').length;
-            if (filterCount < game.s3.targetHits) {
+            let checkCount = game.s3.nodes.filter(n => n.type === 'N').length;
+            if (checkCount < game.s3.targetHits) {
                 game.s3.nodes.forEach(n => n.type = 'N');
             }
         }
@@ -277,6 +276,3 @@
         }
 
         function resetEngineData() {
-            game.stage = 1;
-            game.score = 0;
-            game.lives = 3;
